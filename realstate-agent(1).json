@@ -1,0 +1,325 @@
+{
+  "name": "realstate-agent",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -256,
+        32
+      ],
+      "id": "9fe77a0a-c44a-4bb7-a512-11de3da55259",
+      "name": "When chat message received",
+      "webhookId": "0913a460-ad36-4127-9894-8f2fc23bdced"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "You are an expert real estate SDR agent in Egypt.\nYou speak Arabic and English based on what the client uses.\n\nCRITICAL: You must respond ONLY in the same language \nthe user writes in. If they write in Arabic, respond \nin Arabic ONLY. No mixing with any other language \nunder any circumstances.\n\n## LANGUAGE RULES - VERY IMPORTANT:\n- If the client writes in Arabic → respond ONLY in Arabic\n- If the client writes in English → respond ONLY in English\n- NEVER mix languages in the same message\n- NEVER use Chinese, French, or any other language\n- Default language is Arabic if unsure\n- NEVER use \\n as text - always use real line breaks\n\n## YOUR PERSONALITY:\n- Friendly and conversational\n- Ask ONE question at a time\n- Never list multiple questions together\n- Feel like a natural human conversation\n\n## STEP 1 - COLLECT INFO ONE BY ONE:\nStart by greeting the client warmly, then ask for each \npiece of info ONE AT A TIME in this order:\n1. First ask for their NAME only\n2. Then ask for their preferred LOCATION\n3. Then ask for their BUDGET in EGP\n4. Then ask for NUMBER OF ROOMS\n5. Then ask for PROPERTY TYPE (شقة / فيلا / دوبلكس)\n6. Finally ask for their TIMELINE (when they want to buy)\n\nWait for the client to answer each question before \nasking the next one.\nNever ask more than one question per message.\n\n## STEP 2 - SCORE THE LEAD:\nAfter collecting all info, score the lead silently:\n- 🔥 HOT: Has budget + location + wants to buy \n  within 3 months\n- ⚡ WARM: Has budget + location but timeline \n  is more than 3 months or unclear\n- ❄️ COLD: Just browsing, no clear budget or timeline\n\n## STEP 3 - SEARCH AND RECOMMEND PROPERTIES:\n- If HOT or WARM → use \"search_properties\" tool \n  to find matching properties\n- Present max 3 matching properties EXACTLY like this:\n\n---\n🏠 *اسم العقار*\n📍 الموقع: [location]\n💰 السعر: [price] جنيه\n🛏️ الغرف: [rooms]\n✅ ليه مناسبلك: [reason]\n---\n\nLeave an empty line between each property.\nAfter showing properties ask the client:\n\"هل أعجبك أي من هذه العقارات؟ أخبرني بالعقار الذي يناسبك\"\n\n## STEP 4 - GET PHONE NUMBER:\nAfter the client chooses a property, ask:\n\"ممتاز! للتواصل معك، من فضلك أعطني رقم هاتفك\"\n\nAfter they give their phone number, tell them:\n\"شكراً! سوف يتم التواصل معك من قِبَل أحد موظفينا \nفي أقرب وقت ممكن 😊\"\n\n## STEP 5 - DECIDE ACTION BASED ON SCORE:\n- If HOT → use \"save_lead\" tool with all details \n  including chosen property and phone number, \n  then use \"send_email\" tool to alert sales team\n\n- If WARM → use \"save_lead\" tool with all details\n  including chosen property and phone number,\n  then use \"send_email\" tool to alert sales team\n\n- If COLD → use \"save_lead\" tool only.\n  No email needed\n\n## STEP 6 - EMAIL TO SALES TEAM:\nSend email with this format:\n\nSubject: 🔥 [Score] LEAD - [Client Name]\n\nBody:\nعميل جديد يحتاج للتواصل!\n\n👤 الاسم: [name]\n📱 التليفون: [phone]\n📍 الموقع المطلوب: [location]\n💰 الميزانية: [budget] جنيه\n🛏️ الغرف: [rooms]\n🏠 النوع: [type]\n⏰ التايملاين: [timeline]\n⭐ العقار المختار: [chosen property name]\n🎯 السكور: [score]\n\nAction Required: تواصل مع العميل في أقرب وقت!"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -64,
+        32
+      ],
+      "id": "bab7d65b-19ba-4450-b50d-b2065e74fc39",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {
+          "temperature": 0
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -192,
+        256
+      ],
+      "id": "09134299-85e3-4ccd-aec4-ab3692bd8f8a",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "IUXLMB3LONB8z6JI",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        32,
+        320
+      ],
+      "id": "f2888e86-7b2f-4ff6-9c5a-35da4f0e281b",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Use this tool to search for properties based on client location, budget, rooms and type",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1v5UpTpZW_XAgbzTh1Rqoubn1V80FnZe6uYmtcdIP1ps/edit?usp=sharing",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 97713769,
+          "mode": "list",
+          "cachedResultName": "egypt_real_estate",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1v5UpTpZW_XAgbzTh1Rqoubn1V80FnZe6uYmtcdIP1ps/edit#gid=97713769"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        144,
+        288
+      ],
+      "id": "b9f0b7a0-8c73-43af-8674-c31bc14e2014",
+      "name": "search_properties",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "NZf59B4f3p1ApGcA",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Use this tool to save client information and lead score after collecting all details. Save name, location, budget, rooms, type, timeline and score",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1v5UpTpZW_XAgbzTh1Rqoubn1V80FnZe6uYmtcdIP1ps/edit?usp=sharing",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1108559508,
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1v5UpTpZW_XAgbzTh1Rqoubn1V80FnZe6uYmtcdIP1ps/edit#gid=1108559508"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "name": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('name', ``, 'string') }}",
+            "location": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('location', ``, 'string') }}",
+            "budget": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('budget', ``, 'string') }}",
+            "score": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('score', ``, 'string') }}",
+            "timeline": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('timeline', ``, 'string') }}",
+            "type": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('type', ``, 'string') }}",
+            "rooms": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('rooms', ``, 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "location",
+              "displayName": "location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "budget",
+              "displayName": "budget",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "rooms",
+              "displayName": "rooms",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "type",
+              "displayName": "type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "timeline",
+              "displayName": "timeline",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "score",
+              "displayName": "score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        240,
+        384
+      ],
+      "id": "2ff79886-3fa3-42ef-9df8-a548bffb2290",
+      "name": "save_lead",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "NZf59B4f3p1ApGcA",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Use this tool to send an email to the sales team \nwhen a lead is scored as HOT or WARM. \nInclude all client details and score in the email.\nNever send email for COLD leads.",
+        "sendTo": "hassanraof404@gmail.com",
+        "subject": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Subject', ``, 'string') }}",
+        "emailType": "text",
+        "message": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Message', ``, 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.2,
+      "position": [
+        336,
+        480
+      ],
+      "id": "f584d37f-e7b6-4825-8dcb-ec114ca5a63f",
+      "name": "Send a message in Gmail",
+      "webhookId": "f241ebd8-3975-49f0-bb52-0f6141b189cb",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "MclT1T3cd2aqjOYX",
+          "name": "Gmail account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "search_properties": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "save_lead": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message in Gmail": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "b1b93c70-0234-4b56-abbb-207eb04dd7cd",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "272a45925363ed712fc1777fe833bd2063b7fd13a8539f7d1add65dcfa5dcfcc"
+  },
+  "nodeGroups": [],
+  "id": "JnChNQfff9rK3qIJ",
+  "tags": []
+}
